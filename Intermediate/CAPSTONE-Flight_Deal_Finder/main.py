@@ -2,10 +2,12 @@ from datetime import date, timedelta
 from data_manager import DataManager
 from flight_search import FlightSearch
 from flight_data import find_cheapest_flight
+from notification_manager import NotificationManager
 
 flight_search = FlightSearch()
 datamanager = DataManager()
 sheet_data = datamanager.get_sheet_data()
+notification_manager = NotificationManager()
 
 #____________________________Update Google sheet if IATA codes are missing_________________________________#
 
@@ -40,5 +42,15 @@ for city in sheet_data:
 
     cheapest_flight_today = find_cheapest_flight(flight_info)
 
+    # ________________________Whatsapp if price lower than historical low price______________________________#
+
     if cheapest_flight_today.price_today != "N/A" and cheapest_flight_today.price_today < city["lowestPrice"]:
         print(f"Lower price flight found to {city["city"]}!")
+
+        notification_manager.send_whatsapp(
+            message_body=f"Low price alert! Only £{cheapest_flight_today.price_today} to fly "
+                         f"from {cheapest_flight_today.departure_airport} "
+                         f"to {cheapest_flight_today.destination_airport}, "
+                         f"on {cheapest_flight_today.out_date} "
+                         f"until {cheapest_flight_today.in_date}."
+        )
